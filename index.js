@@ -7,15 +7,16 @@ app.use(cors());
 app.use(express.json());
 
 const pool = new Pool({
-  user: 'postgres',
-  host: 'db.snrnmwvtzknevgmghvoc.supabase.co',
+  user: 'postgres.snrnmwvtzknevgmghvoc',        // user del pooler (fíjate en la imagen)
+  host: 'aws-0-us-east-2.pooler.supabase.com',  // host del pooler
   database: 'postgres',
-  password: 'koke123', // copia aquí tu password de Supabase
-  port: 5432,
+  password: 'koke123',                           // tu password
+  port: 6543,                                    // puerto del pooler
   ssl: {
     rejectUnauthorized: false
   }
 });
+
 
 
 
@@ -349,7 +350,7 @@ app.get('/ObTienda',async(req,res)=>{
 
 
 // Inicia el servidor
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Servidor backend funcionando en http://localhost:${PORT}`);
 });
