@@ -8,12 +8,12 @@ app.use(express.json());
 
 const pool = new Pool({
   user: 'postgres',
-  host: 'localhdb.snrnmwvtzknevgmghvoc.supabase.coost',
-  database: 'postgres', // nombre de la base de datos que creaste
-  password: 'koke123', // ⚠️ pon aquí tu contraseña real de postgres
+  host: 'db.snrnmwvtzknevgmghvoc.supabase.co',
+  database: 'postgres',
+  password: 'koke123', // copia aquí tu password de Supabase
   port: 5432,
   ssl: {
-    rejectUnauthorized: false   // Importante para conexión segura con Supabase
+    rejectUnauthorized: false
   }
 });
 
