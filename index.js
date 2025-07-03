@@ -17,6 +17,7 @@ const pool = new Pool({
   }
 });
 
+let globalToken = ""; 
 
 
 
@@ -58,6 +59,7 @@ app.post('/login', async (req, res) => {
 
       // Generar token con expiración de 1 hora
       const token = jwt.sign(payload, SECRET_KEY, { expiresIn: '1h' });
+      this.globalToken = token; 
 
       res.json({ valido: true, id, rol, token,tienda });
     } else {
@@ -69,7 +71,20 @@ app.post('/login', async (req, res) => {
   }
 });
 
+app.get('/checkToken', (req, res) => {
+  const token = req.headers['authorization']?.split(' ')[1];
 
+  if (!token) {
+    return res.status(401).json({ valido: false, message: 'Token no proporcionado' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, SECRET_KEY);
+    res.status(200).json({ valido: true, decoded });
+  } catch (error) {
+    res.status(403).json({ valido: false, message: 'Token inválido o expirado' });
+  }
+});
 
 
 app.post('/sprod', async (req,res)=>{
@@ -181,13 +196,55 @@ app.post('/anadirProductoATienda', async (req, res) => {
   }
 });
 
+//------------------------------ver pedidos de usuario---------------------------------------------------
+
+app.get('/misPedidos', async (req, res) => {
+  const token = req.headers['authorization']?.split(' ')[1];
+
+  if (!token) return res.status(401).json({ error: 'Token no proporcionado' });
+
+  let decoded;
+  try {
+    decoded = jwt.verify(token, SECRET_KEY);
+  } catch (err) {
+    return res.status(403).json({ error: 'Token inválido' });
+  }
+
+  const idUsuario = decoded.id;
+
+  try {
+    const result = await pool.query(
+      'SELECT * FROM pedidos WHERE idusuario = $1',
+      [idUsuario]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error al obtener pedidos:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 
 
 
 //-------------------|||||||||||||PEDIDOS||||||||||||||||------------------------------------------------
 
+
 app.post('/ordenar', async (req, res) => {
+  const token = req.headers['authorization']?.split(' ')[1];
+  console.log('Token recibido en /ordenar:', token);
+  if (!token) return res.status(401).json({ error: 'Token no proporcionado' });
+
+  let decoded;
+  try {
+    decoded = jwt.verify(token, SECRET_KEY);
+  } catch (err) {
+    return res.status(403).json({ error: 'Token inválido' });
+  }
+
+  const idUsuario = decoded.id;
+
+
   const pedidos = req.body; // { [tienda]: { folio, productos: [...] } }
 
   try {
@@ -202,8 +259,8 @@ app.post('/ordenar', async (req, res) => {
 
       // Insertar pedido
       const result = await pool.query(
-        'INSERT INTO pedidos (folio, fecha, hora, tienda) VALUES ($1, $2, $3, $4) RETURNING id',
-        [folio, fecha, hora, tienda]
+        'INSERT INTO pedidos (folio, fecha, hora, tienda,idusuario) VALUES ($1, $2, $3, $4,$5) RETURNING id',
+        [folio, fecha, hora, tienda,idUsuario]
       );
       const id_pedido = result.rows[0].id;
 
